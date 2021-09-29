@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "AskDbConsole": {
+      "commandName": "Project",
+      "commandLineArgs": "ask \"How can I fix underexposed images?\""
+    }
+  }
+}
