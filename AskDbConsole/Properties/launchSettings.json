@@ -3,6 +3,14 @@
     "AskDbConsole": {
       "commandName": "Project",
       "commandLineArgs": "ask \"How can I fix underexposed images?\""
+    },
+    "test": {
+      "commandName": "Project",
+      "commandLineArgs": "test"
+    },
+    "indexFile": {
+      "commandName": "Project",
+      "commandLineArgs": "index C:\\App\\lucene-8.9.0\\README.txt"
     }
   }
 }

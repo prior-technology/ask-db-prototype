@@ -3,7 +3,7 @@ using Xunit;
 
 namespace TestAskDb
 {
-    public class UnitTest1
+    public class TestSearchEndpoint
     {
         [Fact]
         public void Test1()
