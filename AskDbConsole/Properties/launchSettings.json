@@ -11,6 +11,22 @@
     "indexFile": {
       "commandName": "Project",
       "commandLineArgs": "index C:\\App\\lucene-8.9.0\\README.txt"
+    },
+    "help": {
+      "commandName": "Project",
+      "commandLineArgs": "--help"
+    },
+    "indexFolder": {
+      "commandName": "Project",
+      "commandLineArgs": "index C:\\Users\\StephenPrior\\source\\repos\\gimp-help\\html\\en  gimp-help"
+    },
+    "engines": {
+      "commandName": "Project",
+      "commandLineArgs": "engines"
+    },
+    "ask at last": {
+      "commandName": "Project",
+      "commandLineArgs": "ask \"How can I create a tileable natural stone texture\" file-aF3nKLE4uVHzYDArqtPV9tZ4"
     }
   }
 }

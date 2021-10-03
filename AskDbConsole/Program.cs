@@ -14,26 +14,34 @@ namespace AskDbConsole
             //Setup command line arguments
             var askCommand = new Command("ask", "Send a question to the question answering API");
             askCommand.AddArgument(new Argument<string>("question"));
+            askCommand.AddArgument(new Argument<string>("file-id"));
 
-            var indexCommand = new Command("index", "Parse an html file, or folder containing html files, sending content to OpenAPI");
-            indexCommand.AddArgument(new Argument<FileInfo>("file"));
-            //indexCommand.AddArgument(new Argument<DirectoryInfo>("folder"));
+            var addCommand = new Command("add", "Parse an html file sending content to OpenAPI");
+            addCommand.AddArgument(new Argument<FileInfo>("file"));
+            var indexCommand = new Command("index", "Parse all  html documents in a folder, sending content to OpenAPI as a single file");
+            indexCommand.AddArgument(new Argument<DirectoryInfo>("folder"));
+            indexCommand.AddArgument(new Argument<string>("name"));
+
+            var enginesCommand = new Command("engines",
+                "Describes and provide access to the various models available in the API.");
+            enginesCommand.AddOption(new Option<string>("--id"));
 
             var testCommand = new Command("test", "Test");
 
             var rootCommand = new RootCommand
             {
-                askCommand, indexCommand, testCommand
+                askCommand, addCommand, indexCommand, enginesCommand, testCommand
             };
 
             var client = new OpenAIClient();
             var consumer = new LibraryConsumer(client);
 
             var inquisitor = new QuestionAsker(client);
-            askCommand.Handler = CommandHandler.Create<string>(inquisitor.AskQuestion);
-            indexCommand.Handler = CommandHandler.Create<FileInfo>(consumer.IndexFile);
-            //indexCommand.Handler = CommandHandler.Create<DirectoryInfo>(consumer.IndexFolder);
+            askCommand.Handler = CommandHandler.Create<string,string>(inquisitor.AskQuestion);
+            addCommand.Handler = CommandHandler.Create<FileInfo>(consumer.IndexFile);
+            indexCommand.Handler = CommandHandler.Create<DirectoryInfo,string>(consumer.IndexFolder);
             testCommand.Handler = CommandHandler.Create(DoTest);
+            enginesCommand.Handler = CommandHandler.Create<string>(EnginesCommandHandler.CallEngines);
             var result = rootCommand.Invoke(args);
             Console.ReadLine();
             Console.WriteLine("fin");
