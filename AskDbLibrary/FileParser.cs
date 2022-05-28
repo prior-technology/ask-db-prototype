@@ -1,17 +1,22 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Web;
-using HtmlAgilityPack;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AskDb.Library
 {
     public class FileParser
     {
+        private readonly ILogger _logger;
+        private readonly IHtmlConverter _htmlConverter;
+        public FileParser() : this(null,null)  {  }
+
+        public FileParser(ILogger<FileParser> logger, IHtmlConverter htmlConverter)
+        {
+            _logger = logger ?? NullLogger<FileParser>.Instance;
+            _htmlConverter = htmlConverter ?? new AgilityConverter1();
+        }
         public async Task<string> GetAsText(FileInfo file)
         {
             if (IsHtmlExtension(file.Extension))
@@ -27,15 +32,21 @@ namespace AskDb.Library
         /// <summary>
         /// Extracts text from an HTML formatted string
         /// </summary>
-        /// <param name="html"></param>
+        /// <param name="file"></param>
         /// <returns></returns>
         public string GetTextFromHtml(FileInfo file)
         {
-            var doc = new HtmlDocument();
-            using var stream = file.OpenRead();
-            doc.Load(stream);
-            var body = doc.DocumentNode.SelectSingleNode("//body");
-            return body.InnerText;
+            if (file == null) throw new ArgumentNullException(nameof(file));
+            try
+            {
+                using var stream = file.OpenRead();
+                return _htmlConverter.Convert(stream);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Unable to parse file {0}", file.FullName);
+                return string.Empty;
+            }
         }
 
         private static bool IsHtmlExtension(string fileExtension)

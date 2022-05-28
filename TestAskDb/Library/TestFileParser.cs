@@ -19,5 +19,18 @@ namespace TestAskDb.Library
             //then the text is visible
             text.Should().Contain("This section provides a brief introduction", "it is the start of the html content");
         }
+
+        [Fact]
+        public void TestParseEmptyFile()
+        {
+            //given a FileParser with an HTML document loaded
+            var fileParser = new FileParser();
+
+            //when a file is loade
+            var text = fileParser.GetTextFromHtml(new FileInfo("empty.html"));
+
+            //then the text is visible
+            text.Should().BeEmpty();
+        }
     }
 }

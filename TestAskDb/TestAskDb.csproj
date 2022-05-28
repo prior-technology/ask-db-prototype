@@ -35,6 +35,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="empty.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="gimp-first-steps.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

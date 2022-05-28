@@ -1,0 +1,18 @@
+﻿@using AskDbWebDemo.Data
+@inject AnswerServiceCaller AnswerService
+
+
+<EditForm OnValidSubmit="@HandleQuestion">
+    <InputText id="question" @bind-Value="Question"></InputText>
+    <button type="submit">Ask</button>
+</EditForm>
+
+@code {
+
+    private string Question { get; set; }
+
+    private async Task HandleQuestion()
+    {
+        var response = await AnswerService.Ask(Question);
+    }
+}

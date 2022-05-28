@@ -1,0 +1,22 @@
+﻿@using AskDbWebDemo.Data
+@using AskDb.Model
+@inject AnswerServiceCaller _answerServiceCaller
+
+@if(_topicDocument != null)
+{
+    <p>Id: @_topicDocument.Purpose</p><p>FileName: @_topicDocument.FileName</p><p>Purpose : @_topicDocument.Purpose</p>
+}
+
+@code {
+    [Parameter]
+    public Topic Topic { get; set; } = null;
+
+    private Document _topicDocument=null;
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Topic != null)
+        {
+            _topicDocument = await _answerServiceCaller.GetDocument(Topic);           
+        }
+    }
+}

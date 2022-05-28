@@ -1,0 +1,54 @@
+﻿@page "/examples"
+@using AskDbWebDemo.Data
+@using Microsoft.Extensions.Logging;
+@inject ILogger<Examples> _logger;
+@inject NavigationManager _navigationManager
+@inject AnswerServiceCaller _answerServiceCaller
+
+
+<h1>Ask DB Demo</h1>
+
+<p>
+    Provide examples of questions and answers based on a specific document. This guides the Answers service in generating appropriate responses.
+</p>
+
+<div class="form-group">
+    <label>
+        Question Context:
+        <textarea @bind="_questionContext" rows="3" cols="120" />
+    </label>
+
+    <table>
+        @for (int i = 0; i < _questions.Length; i++)
+        {
+            <tr>
+                <th><input @bind="_questions[i]" size="70" /></th> <td><input @bind="_answers[i]" size="70" /></td>
+            </tr>
+        }
+    </table>
+</div>
+<hr />
+
+@code
+{
+
+    private string _questionContext;
+    private string[] _questions;
+    private string[] _answers;
+
+
+    protected override void OnInitialized()
+    {
+        var answers = _answerServiceCaller.GetExamples();
+        _questionContext = answers.ContextDocument;
+        var qList = new List<string>();
+        var aList = new List<string>();
+        foreach (var questionAndAnswer in answers.QuestionsAndAnswers)
+        {
+            qList.Add(questionAndAnswer.Item1);
+            aList.Add(questionAndAnswer.Item2);
+        }
+        _questions = qList.ToArray();
+        _answers = aList.ToArray();
+    }
+}

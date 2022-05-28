@@ -1,0 +1,33 @@
+﻿@page "/history"
+@using AskDbWebDemo.Data
+@using Microsoft.Extensions.Logging;
+@inject ILogger<History> _logger;
+@inject NavigationManager _navigationManager
+@inject AnswerServiceCaller _answerServiceCaller
+
+
+    <h1>Previous Questions</h1>
+
+    <select @bind="SelectedQuestion">
+        @if (Questions != null)
+        {
+            foreach (var question in Questions)
+            {
+                <option value="@question.Id">@question.QuestionText</option>
+            }
+        }
+    </select>
+
+@code
+{
+
+    private string SelectedQuestion;
+    private List<QuestionModel> Questions;
+
+
+    protected override void OnInitialized()
+    {
+        SelectedQuestion = "";
+        Questions = new List<QuestionModel>();
+    }
+}

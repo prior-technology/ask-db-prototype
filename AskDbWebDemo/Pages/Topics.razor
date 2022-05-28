@@ -1,0 +1,55 @@
+﻿@page "/topics"
+@using AskDb.Library
+@using AskDbWebDemo.Data
+@using AskDb.Model
+@using Microsoft.Extensions.Logging
+@inject ILogger<Index> _logger
+@inject NavigationManager _navigationManager
+@inject AnswerServiceCaller _answerServiceCaller
+@inject ITopicRepository _topicRepository
+
+<h1>Current User Topics</h1>
+
+<p>
+    <table>
+        <thead><tr><th>Key</th><th>Description</th><th>File Id</th><th></th><th>Doc Details</th></tr></thead>
+        <tbody>
+        @foreach (var topic in GetTopics())
+        {
+            <tr>
+            <td>@topic.Key</td><td>@topic.Description</td><td>@topic.FileId</td>
+                <td><button @onclick=@RemoveTopicCallback(topic)>Delete</button></td>
+                <td><TopicSummary Topic=@topic/></td>
+            </tr>
+        }      
+        </tbody>
+    </table>
+</p>
+
+<h2>Create Topic</h2>
+    <input type="text" id="NewTopicKey"/>
+    <input type="text" id="NewTopicDescription"/>
+<hr />
+
+<h2>Op</h2>
+    <input type="text" id="NewTopicKey"/>
+    <input type="text" id="NewTopicDescription"/>
+<hr />
+
+@code
+{
+
+    Action RemoveTopicCallback(Topic topic)
+    {
+        void Remove() {
+            _topicRepository.RemoveTopic(topic);
+        };
+
+        return Remove;
+    }
+
+    IEnumerable<Topic> GetTopics()
+    {
+        return _topicRepository.GetTopics();
+    }
+}

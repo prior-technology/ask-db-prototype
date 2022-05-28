@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31205.134
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32126.317
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AskDbConsole", "AskDbConsole\AskDbConsole.csproj", "{B7354A5A-CAB9-4D20-AA06-37906AACD845}"
 EndProject
@@ -12,10 +12,16 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{FEBA7D86-1D33-4CA1-A6EF-F9BD5750D8B9}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
-		tika-server-standard-2.1.0.jar = tika-server-standard-2.1.0.jar
+		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenAI-DotNet", "..\OpenAI-API-dotnet\OpenAI-DotNet\OpenAI-DotNet.csproj", "{472A7073-214C-494D-ADEE-B8DEBF18232A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AskDbWebDemo", "AskDbWebDemo\AskDbWebDemo.csproj", "{8FDD7374-A36E-4AB0-BAB9-389D6882149F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AskDb.Model", "AskDb.Model\AskDb.Model.csproj", "{3539587D-9F8B-4EA9-9CCC-30424A6B9E62}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AskDb.Library.Azure", "AskDb.Library.Azure\AskDb.Library.Azure.csproj", "{A85301AF-9FDB-4472-9B1A-FBEC8E7D9681}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenAI-DotNet-QA", "OpenAI-DotNet\OpenAI-DotNet\OpenAI-DotNet-QA.csproj", "{7DF6582F-E294-49F4-9AE2-3E75EF92C609}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,10 +41,22 @@ Global
 		{391DA641-9D2E-4093-B172-CF8D6AE27CF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{391DA641-9D2E-4093-B172-CF8D6AE27CF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{391DA641-9D2E-4093-B172-CF8D6AE27CF5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{472A7073-214C-494D-ADEE-B8DEBF18232A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{472A7073-214C-494D-ADEE-B8DEBF18232A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{472A7073-214C-494D-ADEE-B8DEBF18232A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{472A7073-214C-494D-ADEE-B8DEBF18232A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8FDD7374-A36E-4AB0-BAB9-389D6882149F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8FDD7374-A36E-4AB0-BAB9-389D6882149F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8FDD7374-A36E-4AB0-BAB9-389D6882149F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8FDD7374-A36E-4AB0-BAB9-389D6882149F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3539587D-9F8B-4EA9-9CCC-30424A6B9E62}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3539587D-9F8B-4EA9-9CCC-30424A6B9E62}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3539587D-9F8B-4EA9-9CCC-30424A6B9E62}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3539587D-9F8B-4EA9-9CCC-30424A6B9E62}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A85301AF-9FDB-4472-9B1A-FBEC8E7D9681}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A85301AF-9FDB-4472-9B1A-FBEC8E7D9681}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A85301AF-9FDB-4472-9B1A-FBEC8E7D9681}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A85301AF-9FDB-4472-9B1A-FBEC8E7D9681}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7DF6582F-E294-49F4-9AE2-3E75EF92C609}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7DF6582F-E294-49F4-9AE2-3E75EF92C609}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7DF6582F-E294-49F4-9AE2-3E75EF92C609}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7DF6582F-E294-49F4-9AE2-3E75EF92C609}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

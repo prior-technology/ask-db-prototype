@@ -6,10 +6,12 @@
 
   <ItemGroup>
     <PackageReference Include="HtmlAgilityPack" Version="1.11.37" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\OpenAI-API-dotnet\OpenAI-DotNet\OpenAI-DotNet.csproj" />
+    <ProjectReference Include="..\AskDb.Model\AskDb.Model.csproj" />
+    <ProjectReference Include="..\OpenAI-DotNet\OpenAI-DotNet\OpenAI-DotNet-QA.csproj" />
   </ItemGroup>
 
 </Project>

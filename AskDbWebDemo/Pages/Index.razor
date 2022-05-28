@@ -1,0 +1,156 @@
+﻿@page "/"
+@using AskDb.Library
+@using AskDb.Model
+@using AskDbWebDemo.Data
+@using Microsoft.Extensions.Logging
+@inject ILogger<Index> _logger
+@inject NavigationManager _navigationManager
+@inject AnswerServiceCaller _answerServiceCaller
+@inject ITopicRepository _topicRepository
+
+<h1>Ask DB Demo</h1>
+
+<p>
+    This page demonstrates the capabilities of OpenAI's answers service. Questions can be submitted which are answered based on
+    text from the GNU Image Manipulation program documentation. This was chosen because of the relative complexity of the UI, and because of
+    the availability of a variety of questions to which answers can be compared.
+</p>
+
+<p>
+    The difference between a question answering service compared with a traditional keyword search is that it attempts to generate the most appropriate response
+    to the question using the most relevant documents as context. The language model generates an internal representation of the meaning of the text in the
+    documentation as well as the question and uses this to generate a response, rather than searching for text based matches.
+</p>
+<p>
+    Question answering is likely to work better than keyword search for the following types of queries:
+
+    <ul>
+        <li>
+            When searching for a known concept which may be described in several different ways in the documents. For example, searching
+            for "how do I turn an image by a quarter circle" gives poor results in keyword search because the term 'rotate' is used instead.
+        </li>
+        <li>Where terminology is ambiguous and the same terms mean different things in different contexts</li>
+        <li>When the information needed is likely to be across a few documents rather than in one place</li>
+        <li>When trying to find how to perform a task which is only described indirectly in the relevant documents</li>
+    </ul>
+</p>
+<hr />
+
+<div class="form-group">
+      <h2>Choose a Topic</h2>
+    <label>
+        Ask a question about 
+        <select name="topics" @onchange="@HandleTopicChanged">
+            @foreach (var topic in GetTopics())
+            {
+                <option value="@topic.Key">@topic.Description</option>
+            }
+        </select>:
+        <input value="@_question.QuestionText" @onchange="@HandleQuestionChange" size="@MaxInput" />
+    </label>
+</div>
+<button @onclick="Send">Send</button>
+
+<hr />
+<ul id="messagesList">
+    @foreach (var answer in _answersList)
+    {
+        <li>@answer</li>
+    }
+</ul>
+
+<hr />
+
+@if (_contextList != null && _contextList.Count > 0)
+{
+    <h3>Context Documents</h3>
+
+    @foreach (var context in _contextList)
+    {
+        <p>@context</p>
+    }
+
+    <hr/>
+}
+<a href="mailto:stephen@prior.technology">Provide Feedback</a>
+
+<p class="status">Status: @(Status()) </p>
+
+@code
+{
+
+    private List<string> _answersList = new();
+    private List<string> _contextList = new();
+    private List<string> _prevQuestions = new();
+    private List<Topic> _topics = null;
+
+    private readonly QuestionModel _question = new();
+    private bool Busy { get; set; }
+    private bool ShowHistory { get; set; }
+    private static int MaxInput => Shared.Constants.MaxQuestionCharacters;
+    private string _topic = "gimp";
+
+    private void ShowAnswers(string[] answers)
+    {
+        _answersList = new List<string>(answers);
+        Busy = false;
+        StateHasChanged();
+    }
+
+    async Task Send()
+    {
+        _logger.LogTrace(nameof(Send));
+        Busy = true;
+        StateHasChanged();
+        var questionString = CheckInput(_question.QuestionText);
+        var answers = await _answerServiceCaller.Ask(questionString, _topic);
+        ShowAnswers(answers);
+
+    }
+
+    private string CheckInput(string originalString)
+    {
+        //TODO: any additional checks for appropriate input
+        if (originalString.Length <= Constants.MaxQuestionCharacters)
+        {
+            return originalString;
+        }
+        return originalString.Substring(0, Constants.MaxQuestionCharacters);
+
+    }
+
+    async Task HandleQuestionChange(ChangeEventArgs e)
+    {
+        if (e.Value is string value)
+        {
+            _question.QuestionText = value;
+        }
+        await Send();
+    }
+    void HandleTopicChanged(ChangeEventArgs e)
+    {
+        if (e.Value is string value)
+        {
+            _topic = value;
+        }
+    }
+
+    void HandleShowHistory(EventArgs e)
+    {
+        ShowHistory = !ShowHistory;
+    }
+    public string Status()
+    {
+        return Busy ? "Working" : "Ready";
+    }
+
+    IEnumerable<Topic> GetTopics()
+    {
+        if (_topics==null)
+        {
+            _topics = _topicRepository.GetTopics().ToList();
+        }
+
+        return _topics;
+    }
+}

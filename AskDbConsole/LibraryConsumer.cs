@@ -19,24 +19,45 @@ namespace AskDbConsole
 
         public OpenAIClient Client { get; }
         
-        public void IndexFile(FileInfo file)
+        public void IndexFile(FileInfo file, FileInfo outfile = null)
         {
-            var indexer = new FileIndexer(Client);
+            var indexer = new FileIndexer(Client, outfile);
             indexer.BasePath = new DirectoryInfo("C:\\");
             var response = indexer.Index(file).GetAwaiter().GetResult();
+            if (response==null)
+            {
+                Console.WriteLine("Couldn't get file content");
+                return;
+            }
             var responseJson = JsonSerializer.Serialize(response);
             Console.WriteLine(responseJson);
         }
 
-        public void IndexFolder(DirectoryInfo folder, string name)
+        public void IndexFolder(DirectoryInfo folder, string name, FileInfo outfile=null)
         {
-            var indexer = new FileIndexer(Client);
-            indexer.BasePath = new DirectoryInfo("C:\\Users\\StephenPrior\\source\\repos\\gimp-help\\html\\en");
+            var indexer = new FileIndexer(Client, outfile);
+            indexer.BasePath = new DirectoryInfo("repos\\gimp-help\\html\\en");
             var response = indexer.Index(folder, name).GetAwaiter().GetResult();
             var responseJson = JsonSerializer.Serialize(response);
             Console.WriteLine(responseJson);
         }
 
+        public async Task AskQuestion(string question, string fileId)
+        {
+
+            var inquisitor = new QuestionAsker(Client);
+
+            var results = await inquisitor.AskQuestion(question, fileId);
+            
+            foreach (var answerList in results)
+            {
+                Console.WriteLine("========== Next Result ==========");
+                foreach (var answer in answerList)
+                {
+                    Console.WriteLine(answer);
+                }
+            }
+        }
 
     }
 }

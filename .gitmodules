@@ -1,0 +1,3 @@
+[submodule "OpenAI-DotNet"]
+	path = OpenAI-DotNet
+	url = https://github.com/prior-technology/OpenAI-DotNet.git

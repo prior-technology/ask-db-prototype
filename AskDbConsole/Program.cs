@@ -18,9 +18,11 @@ namespace AskDbConsole
 
             var addCommand = new Command("add", "Parse an html file sending content to OpenAPI");
             addCommand.AddArgument(new Argument<FileInfo>("file"));
+            addCommand.AddOption(new Option<FileInfo>("--outfile"));
             var indexCommand = new Command("index", "Parse all  html documents in a folder, sending content to OpenAPI as a single file");
             indexCommand.AddArgument(new Argument<DirectoryInfo>("folder"));
             indexCommand.AddArgument(new Argument<string>("name"));
+            indexCommand.AddOption(new Option<FileInfo>("--outfile"));
 
             var enginesCommand = new Command("engines",
                 "Describes and provide access to the various models available in the API.");
@@ -36,23 +38,13 @@ namespace AskDbConsole
             var client = new OpenAIClient();
             var consumer = new LibraryConsumer(client);
 
-            var inquisitor = new QuestionAsker(client);
-            askCommand.Handler = CommandHandler.Create<string,string>(inquisitor.AskQuestion);
-            addCommand.Handler = CommandHandler.Create<FileInfo>(consumer.IndexFile);
-            indexCommand.Handler = CommandHandler.Create<DirectoryInfo,string>(consumer.IndexFolder);
-            testCommand.Handler = CommandHandler.Create(DoTest);
+            askCommand.Handler = CommandHandler.Create<string,string>(consumer.AskQuestion);
+            addCommand.Handler = CommandHandler.Create<FileInfo, FileInfo>(consumer.IndexFile);
+            indexCommand.Handler = CommandHandler.Create<DirectoryInfo,string, FileInfo> (consumer.IndexFolder);
             enginesCommand.Handler = CommandHandler.Create<string>(EnginesCommandHandler.CallEngines);
             var result = rootCommand.Invoke(args);
             Console.ReadLine();
             Console.WriteLine("fin");
-            
-
-        }
-
-        static void DoTest()
-        {
-            var q = new QuickTest();
-            q.DoTest();
         }
     }
 }
