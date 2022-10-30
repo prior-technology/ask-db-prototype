@@ -10,6 +10,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OpenAI;
 using System.Text.Json;
+using System.Net.Http.Json;
+using System.Linq;
 
 namespace AskDbWebDemo.Data
 {
@@ -58,6 +60,38 @@ namespace AskDbWebDemo.Data
             {
                 Log.LogError(e,"Failure asking a question");
                 return new string[] {"Error!"};
+            }
+        }
+
+        public async Task<string[]> AskWithContext(string question, string contextDocument)
+        {
+            try
+            {
+                var key = Environment.GetEnvironmentVariable("OPENAI_KEY");
+
+                using HttpClient client = new();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
+                client.DefaultRequestHeaders.Add("User-Agent", "askdbdemo");
+                var completionPrompt = Prompter.GetPrompt(question, contextDocument);
+                var completionRequest = new CompletionRequest
+                {
+                    Prompt = completionPrompt,
+                    MaxTokens = 100,
+                    Temperature = 0.5,
+                    TopP = 1,
+                    PresencePenalty = 0,
+                    FrequencyPenalty = 0
+                };
+                var response = await client.PostAsJsonAsync("https://api.openai.com/v1/completions", completionRequest);
+                var responseString = await response.Content.ReadAsStringAsync();
+                var completionResponse = JsonSerializer.Deserialize<CompletionResult>(responseString);
+                return completionResponse.Completions.Select(c => c.Text).ToArray();               
+
+            }
+            catch (Exception e)
+            {
+                Log.LogError(e, "Failure asking a question");
+                return new string[] { "Error!" };
             }
         }
 

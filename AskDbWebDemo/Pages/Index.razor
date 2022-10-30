@@ -46,6 +46,11 @@
                 <option value="@topic.Key">@topic.Description</option>
             }
         </select>:
+        @if (contextIsVisible())
+        {
+            <p>Please provide text to be used as context for your question:</p>
+            <TextArea  @onchange="@HandleContextDocument">@_contextDocument</TextArea>
+        }
         <input value="@_question.QuestionText" @onchange="@HandleQuestionChange" size="@MaxInput" />
     </label>
 </div>
@@ -89,6 +94,7 @@
     private bool ShowHistory { get; set; }
     private static int MaxInput => Shared.Constants.MaxQuestionCharacters;
     private string _topic = "gimp";
+    private string _contextDocument = "gimp";
 
     private void ShowAnswers(string[] answers)
     {
@@ -102,10 +108,22 @@
         _logger.LogTrace(nameof(Send));
         Busy = true;
         StateHasChanged();
-        var questionString = CheckInput(_question.QuestionText);
-        var answers = await _answerServiceCaller.Ask(questionString, _topic);
+        
+        var answers =  await Ask(); 
         ShowAnswers(answers);
 
+    }
+
+    async Task<string[]> Ask()
+    {
+        var questionString = CheckInput(_question.QuestionText);
+
+        if (contextIsVisible())
+        {
+            return await _answerServiceCaller.AskWithContext(questionString, _contextDocument);
+        }
+        
+        return await _answerServiceCaller.Ask(questionString, _topic);
     }
 
     private string CheckInput(string originalString)
@@ -134,7 +152,13 @@
             _topic = value;
         }
     }
-
+    void HandleContextDocument(ChangeEventArgs e)
+    {
+        if (e.Value is string value)
+        {
+            _contextDocument = value;
+        }        
+    }
     void HandleShowHistory(EventArgs e)
     {
         ShowHistory = !ShowHistory;
@@ -142,6 +166,10 @@
     public string Status()
     {
         return Busy ? "Working" : "Ready";
+    }
+    private bool contextIsVisible()
+    {
+        return _topic == "upload";
     }
 
     IEnumerable<Topic> GetTopics()
