@@ -67,26 +67,25 @@ namespace AskDbWebDemo.Data
         {
             try
             {
-                var key = Environment.GetEnvironmentVariable("OPENAI_KEY");
-
                 using HttpClient client = new();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", key);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", OpenAiKey);
                 client.DefaultRequestHeaders.Add("User-Agent", "askdbdemo");
                 var completionPrompt = Prompter.GetPrompt(question, contextDocument);
-                var completionRequest = new CompletionRequest
+                var completionRequest = new CreateCompletionRequest
                 {
-                    Prompt = completionPrompt,
-                    MaxTokens = 100,
-                    Temperature = 0.5,
-                    TopP = 1,
-                    PresencePenalty = 0,
-                    FrequencyPenalty = 0
+                    model= "text-davinci-002",
+                    prompt = completionPrompt,
+                    max_tokens = 150,
+                    temperature= 0.5M,
+                    top_p = 1,
+                    n=1,
+                    stream = false               
                 };
+                
                 var response = await client.PostAsJsonAsync("https://api.openai.com/v1/completions", completionRequest);
                 var responseString = await response.Content.ReadAsStringAsync();
-                var completionResponse = JsonSerializer.Deserialize<CompletionResult>(responseString);
-                return completionResponse.Completions.Select(c => c.Text).ToArray();               
-
+                var completionResponse = JsonSerializer.Deserialize<CreateCompletionResponse>(responseString);
+                return completionResponse.choices.Select(c => c.text).ToArray();
             }
             catch (Exception e)
             {
