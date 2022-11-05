@@ -94,6 +94,18 @@ namespace AskDbWebDemo.Data
             }
         }
 
+        /// <summary>
+        /// Create a topic by splitting up a simple text file
+        /// </summary>
+        /// <param name="contextDocument"></param>
+        /// <returns>topic key</returns>
+        public async Task CreateSimpleTopic(Topic newTopic)
+        {           
+            await TopicRepository.AddTopic(newTopic.Key,newTopic.Description);
+            //calculate and store vectors
+               
+        }
+
         public ExampleQuestions GetExamples()
         {
             var examples = new ExampleQuestions();

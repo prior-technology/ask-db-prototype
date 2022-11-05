@@ -9,5 +9,6 @@ namespace AskDb.Library
         IEnumerable<Topic> GetTopics();
         Task<string> GetFileIdForTopic(string topic);
         void RemoveTopic(Topic topic);
+        Task AddTopic(string topicKey, string contextDocument);
     }
 }

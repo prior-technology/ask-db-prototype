@@ -95,7 +95,7 @@ namespace AskDb.Library.Azure
                 var tableClient = GetTableClient();
                 var partition = $"UID_{_userSid}";
                 //using var response = await tableClient.AddEntityAsync(entity);
-                var topicPages = tableClient.Query<TableEntity>(t => t.PartitionKey == partition);
+                var topicPages = tableClient.Query<TableEntity>(t => t.PartitionKey == partition );
 
                 foreach (var topicPage in topicPages.AsPages())
                 {
@@ -105,7 +105,7 @@ namespace AskDb.Library.Azure
                         {
                             Key = topicContent.RowKey,
                             Description = topicContent.GetString("Description"),
-                            FileId = topicContent.GetString("FileId")
+                            FileId = topicContent.GetString("FileId")                           
                         };
                         topics.Add(topic);
                     }
@@ -155,9 +155,28 @@ namespace AskDb.Library.Azure
 
         private string UseFakeSid()
         {
-            var fakeSid = Guid.NewGuid().ToString();
+            var fakeSid = "U" + (Guid.NewGuid().ToString());
             _logger.LogDebug($"Using fake sid {fakeSid}");
             return fakeSid;
+        }
+
+        public async Task AddTopic(string topicKey, string contextDocument)
+        {
+            var tableClient = GetTableClient();
+            var topicEntity = new TopicTableEntity
+            {
+                PartitionKey = $"UID_{_userSid}",
+                RowKey = topicKey,
+                Description = $"Topic {topicKey} {contextDocument.Substring(0, 20)}",
+                FullText = contextDocument
+            };
+
+            var response = await tableClient.UpsertEntityAsync(topicEntity);
+
+            if (response.IsError)
+            {
+                _logger.LogError("Error attempting to add {topicKey}: {status} {reason}", topicKey, response.Status, response.ReasonPhrase);
+            }
         }
     }
 }

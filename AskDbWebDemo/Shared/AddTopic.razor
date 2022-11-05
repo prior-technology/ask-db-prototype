@@ -1,0 +1,43 @@
+﻿@using AskDbWebDemo.Data
+@using AskDb.Model
+@inject AnswerServiceCaller _answerServiceCaller
+
+@* A form to add a topic providing a key, description and document text *@
+
+<div class="form-group">
+    <label>
+        Topic Key:
+        <input value="@_topic.Key" @onchange="@HandleKeyChange" size="@MaxInput" />
+    </label>
+</div>
+
+<div class="form-group">
+    <label>
+        Topic Document:
+        <TextArea @onchange="@HandleDocument">@_fullText</TextArea>
+    </label>
+</div>
+
+<button @onclick="AddTopicClicked">Add Topic</button>
+
+@code
+{
+    private const int MaxInput = 100;
+    private Topic _topic = new();
+    private string _fullText = "";
+
+    private void HandleKeyChange(ChangeEventArgs e)
+    {
+        _topic.Key = e.Value.ToString();
+    }  
+
+    private void HandleDocument(ChangeEventArgs e)
+    {
+        _topic.Description = e.Value.ToString();
+    }
+
+    private async Task AddTopicClicked()
+    {
+        await _answerServiceCaller.CreateSimpleTopic(_topic);
+    }
+}
