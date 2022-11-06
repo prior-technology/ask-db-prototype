@@ -4,7 +4,7 @@ namespace AskDb.Library
 {
     public interface IQuestionLogger
     {
-        public Task<IAnswerLogger> LogQuestion(string question);
+        public Task<IAnswerLogger> LogQuestion(string userSid, string question);
 
     }
 

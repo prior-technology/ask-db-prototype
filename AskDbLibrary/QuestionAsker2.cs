@@ -7,7 +7,7 @@ namespace AskDb.Library
 
         public static string GetPrompt(string question, string contextDocument)
         {
-            return $"{QuestionPrompt}\nContext:\n{contextDocument}\n\nQuestion:\n{question}\nAnswer:";
+            return $"{QuestionPrompt}\n\nQuestion:\n{question}\n\nContext:\n{contextDocument}\n\nAnswer:";
         }
 
     }

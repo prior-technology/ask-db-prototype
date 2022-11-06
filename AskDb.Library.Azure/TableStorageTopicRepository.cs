@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using AskDb.Model;
@@ -15,19 +16,17 @@ namespace AskDb.Library.Azure
         private const string TableName = "AskDbTopics";
         private readonly IConfiguration _configuration;
         private readonly ILogger _logger;
-        private readonly string _userSid;
 
-        public TableStorageTopicRepository(IConfiguration configuration, ILogger logger, ClaimsPrincipal user)
+        public TableStorageTopicRepository(IConfiguration configuration, ILogger logger)
         {
             _configuration = configuration;
             _logger = logger;
-            _userSid = GetUserSid(user);
         }
 
         private Uri StorageUri => new Uri(_configuration["TableStorageUri"]);
         private string AccountName => _configuration["TableStorageAccount"];
         private string StorageAccountKey => _configuration["TableStorageKey"];
-        private string PartitionKey => $"UID_{_userSid}";
+
         private TableClient GetTableClient()
         {
             return new TableClient(
@@ -42,31 +41,40 @@ namespace AskDb.Library.Azure
                     StorageUri,
                     new TableSharedKeyCredential(AccountName, StorageAccountKey));
         }
-        public async Task<string> GetFileIdForTopic(string topicKey)
+        public async Task<Topic> GetTopic(string uid, string topicKey)
         {
             if (topicKey == null)
             {
-                return _configuration[$"OpenAI:GIMP:FileId"];
+                return new Topic
+                {
+                    Description = "GNU Image Manipulation Program",
+                    FileId = _configuration[$"OpenAI:GIMP:FileId"],
+                    Key = "gimp"
+                };            
             }
 
+            var partitionKey = GetPartitionKey(uid);
             //lookup a topic from Azure table storage
             try
             {
                 var tableClient = GetTableClient();
-                var response = await tableClient.GetEntityAsync<TopicTableEntity>(PartitionKey, topicKey);
+                var response = await tableClient.GetEntityAsync<TopicTableEntity>(partitionKey, topicKey);
 
-                var topic = response.Value;
-
-                return topic.FileId;
+                return response.Value;
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, $"Failed to lookup TopicTableEntity {PartitionKey} {topicKey}");
-                return _configuration[$"OpenAI:{topicKey}:FileId"];
+                _logger.LogWarning(ex, $"Failed to lookup TopicTableEntity {partitionKey} {topicKey}");
+                return new Topic
+                {
+                    Description = "",
+                    FileId = _configuration[$"OpenAI:{topicKey}:FileId"],
+                    Key = topicKey
+                };                
             }                         
         }
 
-        public IEnumerable<Topic> GetTopics()
+        public IEnumerable<Topic> GetTopics(string uid)
         {
             var startTime = DateTime.UtcNow;
             try
@@ -87,13 +95,13 @@ namespace AskDb.Library.Azure
                 return DefaultTopics();
             }
 
-            var topics = new List<Topic>();
+            var topics = DefaultTopics().ToList();
 
             try
             {
                 //_logger.LogInformation($"Have table {table.Name}.");
                 var tableClient = GetTableClient();
-                var partition = $"UID_{_userSid}";
+                var partition = GetPartitionKey(uid);
                 //using var response = await tableClient.AddEntityAsync(entity);
                 var topicPages = tableClient.Query<TableEntity>(t => t.PartitionKey == partition );
 
@@ -120,7 +128,7 @@ namespace AskDb.Library.Azure
             return topics;
         }
 
-        public void RemoveTopic(Topic topic)
+        public void RemoveTopic(string uid, Topic topic)
         {
             throw new NotImplementedException();
         }
@@ -133,39 +141,13 @@ namespace AskDb.Library.Azure
                     new Topic { Key="upload", Description="Uploaded Document" }
                 };
         }
-        private string GetUserSid(ClaimsPrincipal claimsPrincipal)
-        {
-            if (claimsPrincipal == null)
-            {
-                _logger.LogDebug("claimsPrincipal null");
-                return UseFakeSid();
-            }
-
-            var sid = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier);
-            
-            if (sid == null)
-            {
-                _logger.LogDebug($"No claim of type {ClaimTypes.NameIdentifier}");
-                return UseFakeSid();
-            }
-
-            _logger.LogDebug($"Using userSid {sid.Value}");
-            return sid.Value;
-        }
-
-        private string UseFakeSid()
-        {
-            var fakeSid = "U" + (Guid.NewGuid().ToString());
-            _logger.LogDebug($"Using fake sid {fakeSid}");
-            return fakeSid;
-        }
-
-        public async Task AddTopic(string topicKey, string contextDocument)
+        
+        public async Task AddTopic(string uid, string topicKey, string contextDocument)
         {
             var tableClient = GetTableClient();
             var topicEntity = new TopicTableEntity
             {
-                PartitionKey = $"UID_{_userSid}",
+                PartitionKey = GetPartitionKey(uid),
                 RowKey = topicKey,
                 Description = $"Topic {topicKey} {contextDocument.Substring(0, 20)}",
                 FullText = contextDocument
@@ -177,6 +159,11 @@ namespace AskDb.Library.Azure
             {
                 _logger.LogError("Error attempting to add {topicKey}: {status} {reason}", topicKey, response.Status, response.ReasonPhrase);
             }
+        }
+        
+        private string GetPartitionKey(string uid)
+        {
+            return $"UID_{uid}";
         }
     }
 }

@@ -11,17 +11,28 @@
     </label>
 </div>
 
-<div class="form-group">
+<div class="drop-zone" ondrop="">
     <label>
-        Topic Document:
+        Description:
+        <input value="@_topic.Description" @onchange="@HandleDescriptionChange" size="@MaxInput" />
         <TextArea @onchange="@HandleDocument">@_fullText</TextArea>
     </label>
 </div>
 
+@*Accept dragged text, html or docx file*@
+<label>Upload File</label>
+<input type="file" id="NewTopicFile" accept=".docx,.html,.txt" />
+
 <button @onclick="AddTopicClicked">Add Topic</button>
+
 
 @code
 {
+
+    //userSid property passed in from container
+    [Parameter]
+    public string UserSid { get; set; } = null;
+
     private const int MaxInput = 100;
     private Topic _topic = new();
     private string _fullText = "";
@@ -30,14 +41,28 @@
     {
         _topic.Key = e.Value.ToString();
     }  
-
-    private void HandleDocument(ChangeEventArgs e)
+    private void HandleDescriptionChange(ChangeEventArgs e)
     {
         _topic.Description = e.Value.ToString();
     }
 
+    private void HandleDocument(ChangeEventArgs e)
+    {
+        _topic.FullText = e.Value.ToString();
+    }
+
     private async Task AddTopicClicked()
     {
-        await _answerServiceCaller.CreateSimpleTopic(_topic);
+        if (_topic.FullText.Length < 7000)       //estimate tokens < 2000
+        {
+            await _answerServiceCaller.CreateSimpleTopic(UserSid, _topic);
+        } else {
+            await _answerServiceCaller.CreateCompoundTopic(UserSid, _topic);
+        }    
+    }
+
+    private void HandleUploadedDocument(ChangeEventArgs e)
+    {
+
     }
 }

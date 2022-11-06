@@ -13,7 +13,6 @@ namespace AskDb.Library.Azure
             get { return Key; } 
             set { Key = value; } 
         }
-        public string FullText { get; set; }
         public DateTimeOffset? Timestamp { get; set; }
         public ETag ETag { get; set; }
     }

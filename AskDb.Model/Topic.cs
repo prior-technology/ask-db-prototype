@@ -5,6 +5,6 @@
         public string Key { get; set; }
         public string Description { get; set; }
         public string FileId { get; set; }
-
+        public string FullText { get; set; }
     }
 }

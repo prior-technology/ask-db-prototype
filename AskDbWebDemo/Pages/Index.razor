@@ -39,7 +39,7 @@
     <button class="btn btn-primary" @onclick="ShowAddTopic">Add Topic</button>
     @if (_showAddTopicComponent)
     {
-        <AddTopic />
+        <AddTopic UserSid="@_userSid" />
         <hr />
     }
 
@@ -116,11 +116,12 @@
         var claims = user.Claims;
         return claims.FirstOrDefault(c => c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
     }
-    protected override void OnParametersSet()
+    protected override async Task OnInitializedAsync()
     {
-        var userSidTask = GetSid();
-        _userSid = userSidTask.GetAwaiter().GetResult();
+        _userSid = await GetSid();
+        await base.OnInitializedAsync();
     }
+
     private void ShowAnswers(string[] answers)
     {
         _answersList = new List<string>(answers);
@@ -145,10 +146,10 @@
 
         if (contextIsVisible())
         {
-            return await _answerServiceCaller.AskWithContext(questionString, _contextDocument);
+            return await _answerServiceCaller.AskWithContext(_userSid, questionString, _contextDocument);
         }
 
-        return await _answerServiceCaller.Ask(questionString, _topic);
+        return await _answerServiceCaller.Ask(_userSid, questionString, _topic);
     }
 
     private string CheckInput(string originalString)
@@ -199,9 +200,13 @@
 
     IEnumerable<Topic> GetTopics()
     {
+        if (_userSid == "")
+        {
+            return new List<Topic>();
+        }
         if (_topics==null)
         {
-            _topics = _topicRepository.GetTopics().ToList();
+            _topics = _topicRepository.GetTopics(_userSid).ToList();
         }
 
         return _topics;

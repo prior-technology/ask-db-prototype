@@ -12,6 +12,7 @@ namespace AskDb.Library
         public bool stream { get; set; }
         public decimal logprobs { get; set; }
         public string stop { get; set; }
+        public string user { get; set; }
     }
 
 

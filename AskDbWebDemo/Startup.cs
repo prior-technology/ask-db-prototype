@@ -52,9 +52,11 @@ namespace AskDbWebDemo
                 .AddMicrosoftIdentityConsentHandler();
             services.AddHttpClient();
             services.AddHttpContextAccessor();
-            services.AddScoped<ITopicRepository>(MakeTopicRepository);
-            services.AddScoped<AnswerServiceCaller>(MakeAnswerServiceCaller);
-            services.AddScoped<IQuestionLogger, TableStorageQuestionLogger>(MakeTableStorageQuestionLogger);
+            
+            services.AddScoped<ITopicRepository>();
+            services.AddScoped<AnswerServiceCaller>();
+            services.AddScoped<TopicManager>();
+            services.AddScoped<IQuestionLogger, TableStorageQuestionLogger>();
             services.AddSingleton<TableStorageResponseHandler>();
             
             services.AddResponseCompression(opts =>
@@ -93,37 +95,6 @@ namespace AskDbWebDemo
                 endpoints.MapBlazorHub();
                 endpoints.MapFallbackToPage("/_Host");
             });
-        }
-
-        TableStorageQuestionLogger MakeTableStorageQuestionLogger(IServiceProvider serviceProvider)
-        {
-            var httpContextAccessor = serviceProvider.GetService<IHttpContextAccessor>();
-            var httpContext = httpContextAccessor?.HttpContext;
-            return new TableStorageQuestionLogger(serviceProvider.GetService<IConfiguration>(),
-                serviceProvider.GetService<ILoggerFactory>(), 
-                serviceProvider.GetService<TableStorageResponseHandler>(),
-                httpContext?.User);
-        }
-
-        ITopicRepository MakeTopicRepository(IServiceProvider serviceProvider)
-        {
-            var httpContextAccessor = serviceProvider.GetService<IHttpContextAccessor>();
-            var httpContext = httpContextAccessor?.HttpContext;
-            return new TableStorageTopicRepository(serviceProvider.GetService<IConfiguration>(),
-                serviceProvider.GetService<ILogger<TableStorageTopicRepository>>(),
-                httpContext?.User
-                );
-        }
-        AnswerServiceCaller MakeAnswerServiceCaller(IServiceProvider serviceProvider)
-        {
-            var httpContextAccessor = serviceProvider.GetService<IHttpContextAccessor>();
-            var httpContext = httpContextAccessor?.HttpContext;
-            return new AnswerServiceCaller(serviceProvider.GetService<IConfiguration>(),
-                serviceProvider.GetService<IQuestionLogger>(),
-                serviceProvider.GetService<ILogger<AnswerServiceCaller>>(),
-                httpContext?.User,
-                serviceProvider.GetService<ITopicRepository>(),
-                serviceProvider.GetService<IHttpClientFactory>());
         }
     }
 }

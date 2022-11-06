@@ -14,18 +14,16 @@ namespace AskDb.Library.Azure
         private readonly ILogger _logger;
         private readonly ILoggerFactory _loggerFactory;
         private readonly TableStorageResponseHandler _tableStorageResponseHandler;
-        private readonly string _userSid;
 
-        public TableStorageQuestionLogger(IConfiguration configuration, ILoggerFactory loggerFactory, TableStorageResponseHandler tableStorageResponseHandler, ClaimsPrincipal user)
+        public TableStorageQuestionLogger(IConfiguration configuration, ILoggerFactory loggerFactory, TableStorageResponseHandler tableStorageResponseHandler)
         {
             _configuration = configuration;
             _logger = loggerFactory.CreateLogger<TableStorageQuestionLogger>();
             _loggerFactory = loggerFactory;
             _tableStorageResponseHandler = tableStorageResponseHandler;
-            _userSid = GetUserSid(user);
         }
 
-        public async Task<IAnswerLogger> LogQuestion(string question)
+        public async Task<IAnswerLogger> LogQuestion(string userSid, string question)
         {
             try
             {
@@ -48,7 +46,7 @@ namespace AskDb.Library.Azure
                     storageUri,
                     tableName,
                     new TableSharedKeyCredential(accountName, storageAccountKey));
-                var partition = $"UID_{_userSid}";
+                var partition = $"UID_{userSid}";
                 var rowKey = startTime.ToString("O");
                 var entity = new TableEntity(partition, rowKey)
                 {
@@ -69,33 +67,6 @@ namespace AskDb.Library.Azure
                 _logger.LogWarning(e, "Exception thrown while logging question");
                 return new StubAnswerLogger(question);
             }
-        }
-
-        private string GetUserSid(ClaimsPrincipal claimsPrincipal)
-        {
-            if (claimsPrincipal == null)
-            {
-                _logger.LogDebug("claimsPrincipal null");
-                return UseFakeSid();
-            }
-
-            var sid = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier);
-            
-            if (sid == null)
-            {
-                _logger.LogDebug($"No claim of type {ClaimTypes.NameIdentifier}");
-                return UseFakeSid();
-            }
-
-            _logger.LogDebug($"Using userSid {sid.Value}");
-            return sid.Value;
-        }
-
-        private string UseFakeSid()
-        {
-            var fakeSid = Guid.NewGuid().ToString();
-            _logger.LogDebug($"Using fake sid {fakeSid}");
-            return fakeSid;
         }
     }
 }

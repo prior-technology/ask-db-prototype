@@ -12,6 +12,7 @@ using OpenAI;
 using System.Text.Json;
 using System.Net.Http.Json;
 using System.Linq;
+using AskDbWebDemo.Pages;
 
 namespace AskDbWebDemo.Data
 {
@@ -21,38 +22,44 @@ namespace AskDbWebDemo.Data
         private string FileId { get; }
         private ILogger<AnswerServiceCaller> Log { get; }
         private IQuestionLogger QuestionLogger { get; }
-
         private ITopicRepository TopicRepository { get; }
-        private string UserId { get; }
-
-        private readonly IHttpClientFactory _httpClientFactory;
+        private TopicManager TopicManager { get; }
+        private IHttpClientFactory HttpClientFactory { get; }
         private static Dictionary<string, Document> _basicCache { get; } = new Dictionary<string, Document>();
         public AnswerServiceCaller(IConfiguration configuration, IQuestionLogger questionLogger,
              ILogger<AnswerServiceCaller> logger,
-             ClaimsPrincipal user,
              ITopicRepository topicRepository,
-            IHttpClientFactory httpClientFactory)
+            IHttpClientFactory httpClientFactory,
+            TopicManager topicManager)
         {
             OpenAiKey = configuration["OpenAI:key"];
             Log = logger;
             QuestionLogger = questionLogger;
-            UserId = GetUserSid(user);
-            _httpClientFactory = httpClientFactory;
+            HttpClientFactory = httpClientFactory;
             TopicRepository = topicRepository;
+            TopicManager = topicManager;
         }
 
 
 
-        public async Task<string[]> Ask(string question, string topic=null)
+        public async Task<string[]> Ask(string uid, string question, string topicKey=null)
         {
             try
             {
                 var client = GetClient();
                 var inquisitor = new QuestionAsker(client);
-                var answerLoggerTask = QuestionLogger.LogQuestion(question);
+                var answerLoggerTask = QuestionLogger.LogQuestion(uid, question);
                 var answerLogger = await answerLoggerTask;
-                var fileId = await TopicRepository.GetFileIdForTopic(topic);
-                var answer = await inquisitor.AskQuestion(question, fileId, UserId);
+                var topic = await TopicRepository.GetTopic(uid, topicKey);
+                string[] answer;
+                if (topic.FileId==null)
+                {
+                    answer = await AskWithContext(uid, question, topic.FullText);
+                } else
+                {
+                    answer = await inquisitor.AskQuestion(question, topic.FileId, uid);
+                }
+                
                 await answerLogger.LogAnswer(answer[0]);
                 return answer;
             }
@@ -63,7 +70,7 @@ namespace AskDbWebDemo.Data
             }
         }
 
-        public async Task<string[]> AskWithContext(string question, string contextDocument)
+        public async Task<string[]> AskWithContext(string userId, string question, string contextDocument)
         {
             try
             {
@@ -79,7 +86,8 @@ namespace AskDbWebDemo.Data
                     temperature= 0.5M,
                     top_p = 1,
                     n=1,
-                    stream = false               
+                    stream = false,
+                    user = userId,
                 };
                 
                 var response = await client.PostAsJsonAsync("https://api.openai.com/v1/completions", completionRequest);
@@ -99,13 +107,32 @@ namespace AskDbWebDemo.Data
         /// </summary>
         /// <param name="contextDocument"></param>
         /// <returns>topic key</returns>
-        public async Task CreateSimpleTopic(Topic newTopic)
+        public async Task CreateSimpleTopic(string uid, Topic newTopic)
         {           
-            await TopicRepository.AddTopic(newTopic.Key,newTopic.Description);
-            //calculate and store vectors
+            await TopicRepository.AddTopic(uid, newTopic.Key,newTopic.Description);
                
         }
+        public async Task CreateCompoundTopic(string uid, Topic newTopic)
+        {
+            var sections = TopicManager.SplitTopic(newTopic.FullText);
+            foreach (var section in sections)
+            {
+                //calculate embedding vector
+                var request = new EmbeddingRequest
+                {
+                    model = "text-search-babbage-doc-001",
+                    input = section,
+                    user = uid
+                };
+                
+                //persist the section
 
+            }
+            await TopicRepository.AddTopic(uid, newTopic.Key, newTopic.Description);
+            //calculate and store vectors
+            
+
+        }
         public ExampleQuestions GetExamples()
         {
             var examples = new ExampleQuestions();
@@ -117,32 +144,7 @@ namespace AskDbWebDemo.Data
             return new OpenAIClient(new OpenAIAuthentication(OpenAiKey));
         }
 
-        private string GetUserSid(ClaimsPrincipal claimsPrincipal)
-        {
-            if (claimsPrincipal == null)
-            {
-                Log.LogDebug("claimsPrincipal null");
-                return UseFakeSid();
-            }
-
-            var sid = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier);
-
-            if (sid == null)
-            {
-                Log.LogDebug($"No claim of type {ClaimTypes.NameIdentifier}");
-                return UseFakeSid();
-            }
-
-            Log.LogDebug($"Using userSid {sid.Value}");
-            return sid.Value;
-        }
-        private string UseFakeSid()
-        {
-            var fakeSid = Guid.NewGuid().ToString();
-            Log.LogDebug($"Using fake sid {fakeSid}");
-            return fakeSid;
-        }
-
+        
         public async Task<Document> GetDocument(Topic topic)
         {
             if (topic.FileId == null || topic.FileId.Length == 0) return null;
@@ -150,7 +152,7 @@ namespace AskDbWebDemo.Data
             {
                 if (_basicCache.ContainsKey(topic.FileId)) return _basicCache[topic.FileId];
             }
-            var httpClient = _httpClientFactory.CreateClient();
+            var httpClient = HttpClientFactory.CreateClient();
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", OpenAiKey);
             httpClient.DefaultRequestHeaders.Add("User-Agent", "askdb");
 

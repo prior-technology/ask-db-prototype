@@ -5,7 +5,7 @@ namespace AskDb.Library
 {
     public class StubQuestionLogger: IQuestionLogger
     {
-        public Task<IAnswerLogger> LogQuestion(string question)
+        public Task<IAnswerLogger> LogQuestion(string userSid, string question)
         {
             return Task.FromResult<IAnswerLogger>(new StubAnswerLogger(question));
 
