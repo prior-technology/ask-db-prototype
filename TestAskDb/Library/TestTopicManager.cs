@@ -17,7 +17,7 @@ With a couple of lines,
     and some indented lines";
 
             //when the string is split into blocks
-            var target = new TopicManager { BlockSize = 100 };
+            var target = new TopicManager(null,null,null) { BlockSize = 100 };
             var blocks = target.SplitTopic(testString);
 
             //then the blocks are the same as the original string
@@ -34,7 +34,7 @@ With a couple of lines,
     and some indented lines";
 
             //when the string is split into blocks
-            var target = new TopicManager { BlockSize = 25 };
+            var target = new TopicManager(null, null, null) { BlockSize = 25 };
             var blocks = target.SplitTopic(testString).ToArray();
 
             //then the blocks are the same as the original string

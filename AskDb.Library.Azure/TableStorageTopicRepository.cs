@@ -17,7 +17,7 @@ namespace AskDb.Library.Azure
         private readonly IConfiguration _configuration;
         private readonly ILogger _logger;
 
-        public TableStorageTopicRepository(IConfiguration configuration, ILogger logger)
+        public TableStorageTopicRepository(IConfiguration configuration, ILogger<TableStorageTopicRepository> logger)
         {
             _configuration = configuration;
             _logger = logger;
@@ -160,7 +160,26 @@ namespace AskDb.Library.Azure
                 _logger.LogError("Error attempting to add {topicKey}: {status} {reason}", topicKey, response.Status, response.ReasonPhrase);
             }
         }
-        
+        public async Task AddTopic(string uid, Topic newTopic)
+        {
+            var tableClient = GetTableClient();
+            var topicEntity = new TopicTableEntity
+            {
+                PartitionKey = GetPartitionKey(uid),
+                RowKey = newTopic.Key,
+                Description = newTopic.Description,
+                FullText = newTopic.FullText,
+                Sections = newTopic.Sections
+            };
+
+            var response = await tableClient.UpsertEntityAsync(topicEntity);
+
+            if (response.IsError)
+            {
+                _logger.LogError("Error attempting to add {topicKey}: {status} {reason}", newTopic.Key, response.Status, response.ReasonPhrase);
+            }
+        }
+
         private string GetPartitionKey(string uid)
         {
             return $"UID_{uid}";

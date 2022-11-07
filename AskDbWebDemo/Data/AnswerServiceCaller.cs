@@ -40,7 +40,14 @@ namespace AskDbWebDemo.Data
             TopicManager = topicManager;
         }
 
-
+        public async Task<string[]> AskWithContext(string uid, string question, string context)
+        {
+            var answerLoggerTask = QuestionLogger.LogQuestion(uid, question);
+            var answer =  await TopicManager.AskWithContext(uid, question, context);
+            var answerLogger = await answerLoggerTask;
+            await answerLogger.LogAnswer(answer[0]);
+            return answer;
+        }
 
         public async Task<string[]> Ask(string uid, string question, string topicKey=null)
         {
@@ -52,9 +59,13 @@ namespace AskDbWebDemo.Data
                 var answerLogger = await answerLoggerTask;
                 var topic = await TopicRepository.GetTopic(uid, topicKey);
                 string[] answer;
-                if (topic.FileId==null)
+                if (topic.Sections.Count >1)
                 {
-                    answer = await AskWithContext(uid, question, topic.FullText);
+                    answer = await TopicManager.AskCompoundTopic(uid, question, topic);
+                }
+                else if (topic.FileId==null)
+                {
+                    answer = await TopicManager.AskWithContext(uid, question, topic.FullText);
                 } else
                 {
                     answer = await inquisitor.AskQuestion(question, topic.FileId, uid);
@@ -70,69 +81,27 @@ namespace AskDbWebDemo.Data
             }
         }
 
-        public async Task<string[]> AskWithContext(string userId, string question, string contextDocument)
-        {
-            try
-            {
-                using HttpClient client = new();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", OpenAiKey);
-                client.DefaultRequestHeaders.Add("User-Agent", "askdbdemo");
-                var completionPrompt = Prompter.GetPrompt(question, contextDocument);
-                var completionRequest = new CreateCompletionRequest
-                {
-                    model= "text-davinci-002",
-                    prompt = completionPrompt,
-                    max_tokens = 150,
-                    temperature= 0.5M,
-                    top_p = 1,
-                    n=1,
-                    stream = false,
-                    user = userId,
-                };
-                
-                var response = await client.PostAsJsonAsync("https://api.openai.com/v1/completions", completionRequest);
-                var responseString = await response.Content.ReadAsStringAsync();
-                var completionResponse = JsonSerializer.Deserialize<CreateCompletionResponse>(responseString);
-                return completionResponse.choices.Select(c => c.text).ToArray();
-            }
-            catch (Exception e)
-            {
-                Log.LogError(e, "Failure asking a question");
-                return new string[] { "Error!" };
-            }
-        }
+        
 
         /// <summary>
         /// Create a topic by splitting up a simple text file
         /// </summary>
         /// <param name="contextDocument"></param>
         /// <returns>topic key</returns>
-        public async Task CreateSimpleTopic(string uid, Topic newTopic)
+        public async Task CreateTopic(string uid, Topic newTopic)
         {           
-            await TopicRepository.AddTopic(uid, newTopic.Key,newTopic.Description);
-               
-        }
-        public async Task CreateCompoundTopic(string uid, Topic newTopic)
-        {
-            var sections = TopicManager.SplitTopic(newTopic.FullText);
-            foreach (var section in sections)
-            {
-                //calculate embedding vector
-                var request = new EmbeddingRequest
-                {
-                    model = "text-search-babbage-doc-001",
-                    input = section,
-                    user = uid
-                };
-                
-                //persist the section
-
-            }
-            await TopicRepository.AddTopic(uid, newTopic.Key, newTopic.Description);
-            //calculate and store vectors
             
+            if (newTopic.FullText.Length < 7000)       //estimate tokens < 2000
+            {
+                await TopicRepository.AddTopic(uid, newTopic.Key, newTopic.Description);
+            }
+            else
+            {
+                await TopicManager.CreateCompoundTopic(uid, newTopic);
+            }
 
         }
+        
         public ExampleQuestions GetExamples()
         {
             var examples = new ExampleQuestions();

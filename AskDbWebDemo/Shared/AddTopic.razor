@@ -53,12 +53,7 @@
 
     private async Task AddTopicClicked()
     {
-        if (_topic.FullText.Length < 7000)       //estimate tokens < 2000
-        {
-            await _answerServiceCaller.CreateSimpleTopic(UserSid, _topic);
-        } else {
-            await _answerServiceCaller.CreateCompoundTopic(UserSid, _topic);
-        }    
+        await _answerServiceCaller.CreateTopic(UserSid, _topic);        
     }
 
     private void HandleUploadedDocument(ChangeEventArgs e)

@@ -52,8 +52,8 @@ namespace AskDbWebDemo
                 .AddMicrosoftIdentityConsentHandler();
             services.AddHttpClient();
             services.AddHttpContextAccessor();
-            
-            services.AddScoped<ITopicRepository>();
+
+            services.AddScoped<ITopicRepository, TableStorageTopicRepository>();
             services.AddScoped<AnswerServiceCaller>();
             services.AddScoped<TopicManager>();
             services.AddScoped<IQuestionLogger, TableStorageQuestionLogger>();

@@ -10,5 +10,6 @@ namespace AskDb.Library
         Task<Topic> GetTopic(string uid, string topicKey);
         void RemoveTopic(string uid, Topic topic);
         Task AddTopic(string uid, string topicKey, string contextDocument);
+        Task AddTopic(string uid, Topic newTopic);
     }
 }
