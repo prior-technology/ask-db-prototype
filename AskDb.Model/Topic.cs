@@ -8,7 +8,7 @@ namespace AskDb.Model
         public string Description { get; set; }
         public string FileId { get; set; }
         public string FullText { get; set; }
-        public IList<TopicSection> Sections { get; set; } = new List<TopicSection>();
+        public TopicSection[] Sections { get; set; } = new TopicSection[0];
         
     }
 }

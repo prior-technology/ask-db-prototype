@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace TestAskDb.Library
 {
-    public class TestTopicManager
+    public class TestTopicSplitter
     {
         [Fact]
         public void TestSplitTopic()
@@ -17,8 +17,7 @@ With a couple of lines,
     and some indented lines";
 
             //when the string is split into blocks
-            var target = new TopicManager(null,null,null) { BlockSize = 100 };
-            var blocks = target.SplitTopic(testString);
+            var blocks = testString.SplitTopic(100);
 
             //then the blocks are the same as the original string
             var firstBlock = blocks.First();
@@ -34,8 +33,7 @@ With a couple of lines,
     and some indented lines";
 
             //when the string is split into blocks
-            var target = new TopicManager(null, null, null) { BlockSize = 25 };
-            var blocks = target.SplitTopic(testString).ToArray();
+            var blocks = testString.SplitTopic(25).ToArray();
 
             //then the blocks are the same as the original string
             

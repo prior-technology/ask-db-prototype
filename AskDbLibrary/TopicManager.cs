@@ -21,53 +21,17 @@ namespace AskDb.Library
 
         private ITopicRepository TopicRepository { get; }
         private ILogger Logger { get; }
+        private IDocumentStorage DocumentStorage { get; }
 
         private string OpenAiKey { get; }
-        public TopicManager(IConfiguration configuration, ITopicRepository topicRepository, ILogger<TopicManager> logger)
+        public TopicManager(IConfiguration configuration, ITopicRepository topicRepository, IDocumentStorage docStorage, ILogger<TopicManager> logger)
         {
             TopicRepository = topicRepository;
             OpenAiKey = configuration["OpenAI:key"];
             Logger = logger;
+            DocumentStorage = docStorage;
         }
-        public int BlockSize { get; set; } = 4000;
-        /// <summary>
-        /// split fulltext into blocks of up to 4000 characters, replacing NewLine chars with spaces
-        /// </summary>
-        /// <param name="fullText"></param>
-        /// <returns></returns>
-        public IEnumerable<string> SplitTopic(string fullText)
-        {
-           
-            var blocks = new List<string>();
-            var block = new StringBuilder();
-            var blockLength = 0;
-            var lines = fullText.Split(new[] { Environment.NewLine }, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-            bool firstLine = true;
-            foreach (var line in lines)
-            {                
-                if (blockLength + line.Length > BlockSize)
-                {
-                    blocks.Add(block.ToString());
-                    block.Clear();
-                    blockLength = 0;
-                    firstLine = true;
-                }
-                if (firstLine)
-                {
-                    firstLine = false;
-                }
-                else
-                {
-                    block.Append(' ');
-                    blockLength++;
-                }
-                block.Append(line);
-                blockLength += line.Length;
-            }
-            //append the final block
-            blocks.Add(block.ToString());
-            return blocks;
-        }
+        
         public async Task<float[]> GetDocEmbedding(string uid, string section)
         {
             return await GetEmbedding(DocEmbeddingEngine, uid, section);
@@ -84,7 +48,7 @@ namespace AskDb.Library
                     user = uid
                 };
 
-                var client = GetHttpClient();
+                using var client = GetHttpClient();
                 var response = await client.PostAsJsonAsync("https://api.openai.com/v1/embeddings", request);
                 var result = await response.Content.ReadFromJsonAsync<EmbeddingResponse>();
 
@@ -100,22 +64,38 @@ namespace AskDb.Library
         }
         public async Task CreateCompoundTopic(string uid, Topic newTopic)
         {
-            var sections = SplitTopic(newTopic.FullText);
+            var sections = newTopic.FullText.SplitTopic();
+            var addDocTask = DocumentStorage.SaveBlob(uid, newTopic.Key, newTopic.FullText);
+
+            
+            var taskList = new List<Task> { addDocTask };
+            var sectionList = new List<TopicSection>();
+            int sectionNumber = 0;
             foreach (var section in sections)
             {
+                var embeddingVector = await GetDocEmbedding(uid, section);
                 var topicSection = new TopicSection
                 {
-                    SectionText = section,
-                    EmbeddingVector = await GetDocEmbedding(uid, section )
+                    Id = sectionNumber,
+                    EmbeddingVector = embeddingVector
                 };
-                newTopic.Sections.Add(topicSection);
+                sectionList.Add(topicSection);
+                var sectionName = $"{newTopic.Key}-{sectionNumber}";
+                var addSectionTask = DocumentStorage.SaveBlob(uid, sectionName, section);
+                taskList.Add(addSectionTask);
+                sectionNumber++;
             }
+            newTopic.Sections = sectionList.ToArray();
+            await Task.WhenAll(taskList);
+
+            newTopic.FullText = "";
+
             await TopicRepository.AddTopic(uid, newTopic);
         }
 
         private HttpClient GetHttpClient()
         {
-            using HttpClient client = new();
+            HttpClient client = new();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", OpenAiKey);
             client.DefaultRequestHeaders.Add("User-Agent", "askdbdemo");
             return client;
@@ -124,7 +104,7 @@ namespace AskDb.Library
         {
             try
             {
-                var client = GetHttpClient();
+                using var client = GetHttpClient();
                 var completionPrompt = Prompter.GetPrompt(question, contextDocument);
                 var completionRequest = new CreateCompletionRequest
                 {
@@ -171,8 +151,8 @@ namespace AskDb.Library
                 }
                 var sortedResults = results.OrderByDescending(r => r.Score).ToList();
                 var topResult = sortedResults.First();
-
-                var completionPrompt = Prompter.GetPrompt(question, topResult.Section.SectionText);
+                var sectionText = await DocumentStorage.GetBlob(userId, $"{topic.Key}-{topResult.Section.Id}");
+                var completionPrompt = Prompter.GetPrompt(question, sectionText);
                 var completionRequest = new CreateCompletionRequest
                 {
                     model = "text-davinci-002",
@@ -184,7 +164,7 @@ namespace AskDb.Library
                     stream = false,
                     user = userId,
                 };
-                var client = GetHttpClient();
+                using var client = GetHttpClient();
                 var response = await client.PostAsJsonAsync("https://api.openai.com/v1/completions", completionRequest);
                 var responseString = await response.Content.ReadAsStringAsync();
                 var completionResponse = JsonSerializer.Deserialize<CreateCompletionResponse>(responseString);

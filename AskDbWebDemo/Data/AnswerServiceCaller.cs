@@ -59,7 +59,7 @@ namespace AskDbWebDemo.Data
                 var answerLogger = await answerLoggerTask;
                 var topic = await TopicRepository.GetTopic(uid, topicKey);
                 string[] answer;
-                if (topic.Sections.Count >1)
+                if (topic.Sections.Length >1)
                 {
                     answer = await TopicManager.AskCompoundTopic(uid, question, topic);
                 }

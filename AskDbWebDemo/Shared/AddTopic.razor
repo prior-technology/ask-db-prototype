@@ -15,7 +15,7 @@
     <label>
         Description:
         <input value="@_topic.Description" @onchange="@HandleDescriptionChange" size="@MaxInput" />
-        <TextArea @onchange="@HandleDocument">@_fullText</TextArea>
+        <TextArea @onchange="@HandleDocument" maxlength="100000">@_fullText</TextArea>
     </label>
 </div>
 

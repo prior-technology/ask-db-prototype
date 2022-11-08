@@ -49,11 +49,13 @@ namespace AskDbWebDemo
             services.AddSignalR().AddAzureSignalR();
             services.AddRazorPages();
             services.AddServerSideBlazor()
+                .AddHubOptions(options => options.MaximumReceiveMessageSize = 128*1024)
                 .AddMicrosoftIdentityConsentHandler();
             services.AddHttpClient();
             services.AddHttpContextAccessor();
 
             services.AddScoped<ITopicRepository, TableStorageTopicRepository>();
+            services.AddScoped<IDocumentStorage, BlobDocumentStorage>();
             services.AddScoped<AnswerServiceCaller>();
             services.AddScoped<TopicManager>();
             services.AddScoped<IQuestionLogger, TableStorageQuestionLogger>();

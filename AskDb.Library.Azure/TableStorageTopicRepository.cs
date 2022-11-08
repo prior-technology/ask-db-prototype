@@ -59,8 +59,8 @@ namespace AskDb.Library.Azure
             {
                 var tableClient = GetTableClient();
                 var response = await tableClient.GetEntityAsync<TopicTableEntity>(partitionKey, topicKey);
-
-                return response.Value;
+                var topicEntity = response.Value;
+                return topicEntity.GetTopic();
             }
             catch (Exception ex)
             {
@@ -163,13 +163,9 @@ namespace AskDb.Library.Azure
         public async Task AddTopic(string uid, Topic newTopic)
         {
             var tableClient = GetTableClient();
-            var topicEntity = new TopicTableEntity
+            var topicEntity = new TopicTableEntity(newTopic)
             {
-                PartitionKey = GetPartitionKey(uid),
-                RowKey = newTopic.Key,
-                Description = newTopic.Description,
-                FullText = newTopic.FullText,
-                Sections = newTopic.Sections
+                PartitionKey = GetPartitionKey(uid)
             };
 
             var response = await tableClient.UpsertEntityAsync(topicEntity);
