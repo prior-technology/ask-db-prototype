@@ -58,8 +58,8 @@ namespace AskDb.Library.Azure
             try
             {
                 var tableClient = GetTableClient();
-                var response = await tableClient.GetEntityAsync<TopicTableEntity>(partitionKey, topicKey);
-                var topicEntity = response.Value;
+                var response = await tableClient.GetEntityAsync<TableEntity>(partitionKey, topicKey);
+                var topicEntity = new TopicTableEntity(response);
                 return topicEntity.GetTopic();
             }
             catch (Exception ex)
@@ -145,15 +145,18 @@ namespace AskDb.Library.Azure
         public async Task AddTopic(string uid, string topicKey, string contextDocument)
         {
             var tableClient = GetTableClient();
-            var topicEntity = new TopicTableEntity
+            var topic = new Topic
             {
-                PartitionKey = GetPartitionKey(uid),
-                RowKey = topicKey,
+                Key = topicKey,
                 Description = $"Topic {topicKey} {contextDocument.Substring(0, 20)}",
                 FullText = contextDocument
             };
+            var topicEntity = new TopicTableEntity(topic)
+            {
+                PartitionKey = GetPartitionKey(uid),
+            };
 
-            var response = await tableClient.UpsertEntityAsync(topicEntity);
+            var response = await tableClient.UpsertEntityAsync(topicEntity.GetTableEntity());
 
             if (response.IsError)
             {
@@ -162,13 +165,14 @@ namespace AskDb.Library.Azure
         }
         public async Task AddTopic(string uid, Topic newTopic)
         {
+            var te = new TableEntity(GetPartitionKey(uid), newTopic.Key);
             var tableClient = GetTableClient();
             var topicEntity = new TopicTableEntity(newTopic)
             {
                 PartitionKey = GetPartitionKey(uid)
             };
 
-            var response = await tableClient.UpsertEntityAsync(topicEntity);
+            var response = await tableClient.UpsertEntityAsync(topicEntity.GetTableEntity());
 
             if (response.IsError)
             {

@@ -12,7 +12,7 @@ namespace AskDb.Model
 
         [JsonIgnore]
         public float[] EmbeddingVector { get; set; }
-        public string V { 
+        public string EncodedEmbeddingVector { 
             get
             {
                 //return EmbeddingVector as a base64 encoded string

@@ -1,68 +1,55 @@
-﻿using System;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using AskDb.Model;
-using Azure;
+﻿using AskDb.Model;
 using Azure.Data.Tables;
+using System.Linq;
+using static System.Collections.Specialized.BitVector32;
 
 namespace AskDb.Library.Azure
 {
-    internal class TopicTableEntity : ITableEntity
+    public class TopicTableEntity 
     {
-        [JsonIgnore]
+        const string Description = "Description";
+        const string FileId = "FileId";
+        const string Key = "Key";
+
         private Topic Topic { get; }
         public TopicTableEntity(Topic topic)
         {
             Topic = topic;
         }
-
-        public TopicTableEntity()
+        public TopicTableEntity(TableEntity tableEntity)
         {
-            Topic = new Topic();
+            Topic = new Topic
+            {
+                Description = tableEntity.GetString(Description),
+                FileId = tableEntity.GetString(FileId),
+                Key = tableEntity.GetString(Key)
+            };
+            var sectionKeys = tableEntity.Keys.Where(k => k.StartsWith("section_"));
+            if (!sectionKeys.Any())
+            {
+                return;
+            }
+            Topic.Sections = new TopicSection[sectionKeys.Count()];
+            for (var i = 0; i < Topic.Sections.Length; i++)
+            {
+                Topic.Sections[i] = new TopicSection { Id = i, EncodedEmbeddingVector = tableEntity.GetString($"section_{i}") };
+            }
+        }
+
+        public TableEntity GetTableEntity()
+        {
+            var tableEntity = new TableEntity(PartitionKey, Topic.Key);
+            tableEntity.Add(Description, Topic.Description);
+            tableEntity.Add(FileId, Topic.FileId);
+            tableEntity.Add(Key, Topic.Key);
+            for(var i=0; i<Topic.Sections.Length; i++)
+            {
+                var section = Topic.Sections[i];
+                tableEntity.Add($"section_{i}", section.EncodedEmbeddingVector);
+            }
+            return tableEntity;
         }
         public string PartitionKey { get; set; }
-
-        public string Description
-        {
-            get => Topic.Description;
-            set => Topic.Description = value;
-        }
-        public string FileId
-        {
-            get => Topic.FileId;
-            set => Topic.FileId = value;
-        }
-            
-        public string FullText
-        {
-            get
-            {
-                if (Topic.FullText == null) return null;
-                return (Topic.FullText.Length > 31 * 1024) ? Topic.FullText.Substring(0, 31 * 1024) : Topic.FullText;
-            }
-            set => Topic.FullText = value;
-        }
-        
-        public string Sections
-        {
-            get
-            {
-                return JsonSerializer.Serialize(Topic.Sections);
-            }
-            set
-            {
-                Topic.Sections = JsonSerializer.Deserialize<TopicSection[]>(value);
-            }
-        }
-
-        public string RowKey
-        {
-            get => Topic.Key;
-            set => Topic.Key = value;
-        }
-        public DateTimeOffset? Timestamp { get; set; }
-        public ETag ETag { get; set; }
-
         public Topic GetTopic() => Topic;
     }
 }

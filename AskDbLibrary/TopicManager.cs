@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using System.Linq;
 using MathNet.Numerics;
+using MathNet.Numerics.Providers.LinearAlgebra;
 
 namespace AskDb.Library
 {
@@ -131,9 +132,11 @@ namespace AskDb.Library
         }
         private float Similarity(float[] queryEmbedding, float[] docEmbedding)
         {
-            return Distance.Cosine(queryEmbedding, docEmbedding);
+            //return Distance.Cosine(queryEmbedding, docEmbedding);
+            //follows implemetation from openai-python embeddings_utils  https://github.com/openai/openai-python/blob/e51ae9153eda7dc308a78e5f51d06ae50a535f85/openai/embeddings_utils.py#L40
+            return (LinearAlgebraControl.Provider.DotProduct(queryEmbedding, docEmbedding) / (LinearAlgebraControl.Provider.DotProduct(queryEmbedding, queryEmbedding) * LinearAlgebraControl.Provider.DotProduct(docEmbedding, docEmbedding)))
         }
-        
+
         public async Task<string[]> AskCompoundTopic(string userId, string question, Topic topic)
         {
             try
