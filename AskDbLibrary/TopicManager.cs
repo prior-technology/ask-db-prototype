@@ -132,9 +132,12 @@ namespace AskDb.Library
         }
         private float Similarity(float[] queryEmbedding, float[] docEmbedding)
         {
+            //Mathnet cosine distance is different from openai cosine_similarity. Copilot suggests it is 1 - cosine similarity - I haven't checked yet.
             //return Distance.Cosine(queryEmbedding, docEmbedding);
-            //follows implemetation from openai-python embeddings_utils  https://github.com/openai/openai-python/blob/e51ae9153eda7dc308a78e5f51d06ae50a535f85/openai/embeddings_utils.py#L40
-            return (LinearAlgebraControl.Provider.DotProduct(queryEmbedding, docEmbedding) / (LinearAlgebraControl.Provider.DotProduct(queryEmbedding, queryEmbedding) * LinearAlgebraControl.Provider.DotProduct(docEmbedding, docEmbedding)))
+
+            //code below follows implemetation from openai-python embeddings_utils  https://github.com/openai/openai-python/blob/e51ae9153eda7dc308a78e5f51d06ae50a535f85/openai/embeddings_utils.py#L40
+            return (LinearAlgebraControl.Provider.DotProduct(queryEmbedding, docEmbedding)
+                / (LinearAlgebraControl.Provider.DotProduct(queryEmbedding, queryEmbedding) * LinearAlgebraControl.Provider.DotProduct(docEmbedding, docEmbedding)));
         }
 
         public async Task<string[]> AskCompoundTopic(string userId, string question, Topic topic)
