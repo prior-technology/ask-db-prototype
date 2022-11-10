@@ -10,11 +10,12 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
 <h1>Ask DB Demo</h1>
-
+<div style="--grad:210deg; --grad-color:#b3daf4;">
 <p>
     This page demonstrates the capabilities of OpenAI's answers service. Questions can be submitted which are answered based on
     text from the GNU Image Manipulation program documentation. This was chosen because of the relative complexity of the UI, and because of
-    the availability of a variety of questions to which answers can be compared.
+    the availability of a variety of questions to which answers can be compared. Questions can also be asked about Git, or about new topics by 
+    adding text describing the topic.
 </p>
 
 <p>
@@ -35,15 +36,9 @@
         <li>When trying to find how to perform a task which is only described indirectly in the relevant documents</li>
     </ul>
 </p>
+</div>
 <hr />
-    <button class="btn btn-primary" @onclick="ShowAddTopic">Add Topic</button>
-    @if (_showAddTopicComponent)
-    {
-        <AddTopic UserSid="@_userSid" />
-        <hr />
-    }
-
-<div class="form-group">
+    <div class="form-group">
       <h2>Choose a Topic</h2>
     <label>
         Ask a question about 
@@ -52,16 +47,18 @@
             {
                 <option value="@topic.Key">@topic.Description</option>
             }
-        </select>:
+        </select>
+    </label>
         @if (contextIsVisible())
         {
             <p>Please provide text to be used as context for your question:</p>
             <TextArea  @onchange="@HandleContextDocument">@_contextDocument</TextArea>
         }
+    <label>Question
         <input value="@_question.QuestionText" @onchange="@HandleQuestionChange" size="@MaxInput" />
     </label>
 </div>
-<button @onclick="Send">Send</button>
+<button @onclick="Send">Ask</button>
 
 <hr />
 <ul id="messagesList">
@@ -72,6 +69,13 @@
 </ul>
 
 <hr />
+<button class="btn btn-primary" id="btnAddTopic" @onclick="ShowAddTopic">Add Topic</button>
+@if (_showAddTopicComponent)
+{
+    <AddTopic UserSid="@_userSid" />
+    <hr />
+}
+
 
 @if (_contextList != null && _contextList.Count > 0)
 {
@@ -137,7 +141,6 @@
 
         var answers =  await Ask(); 
         ShowAnswers(answers);
-
     }
 
     async Task<string[]> Ask()
@@ -163,13 +166,12 @@
 
     }
 
-    async Task HandleQuestionChange(ChangeEventArgs e)
+    void HandleQuestionChange(ChangeEventArgs e)
     {
         if (e.Value is string value)
         {
             _question.QuestionText = value;
         }
-        await Send();
     }
     void HandleTopicChanged(ChangeEventArgs e)
     {
@@ -215,6 +217,7 @@
 
     private void ShowAddTopic()
     {
-        _showAddTopicComponent = true;
+        _showAddTopicComponent = !_showAddTopicComponent;
+        
     }
 }

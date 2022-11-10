@@ -4,26 +4,28 @@
 
 @* A form to add a topic providing a key, description and document text *@
 
-<div class="form-group">
-    <label>
-        Topic Key:
-        <input value="@_topic.Key" @onchange="@HandleKeyChange" size="@MaxInput" />
-    </label>
-</div>
-
-<div class="drop-zone" ondrop="">
-    <label>
-        Description:
-        <input value="@_topic.Description" @onchange="@HandleDescriptionChange" size="@MaxInput" />
+<fieldset>
+    <legend>Add Topic</legend>
+    <p>Provide a unique identifier and description for this topic</p>
+    <div class="grid" style="--col: 2">
+        <p>
+            <label>Identifier
+            <input value="@_topic.Key" @onchange="@HandleKeyChange" size="@MaxInput" />
+            </label>
+        </p>
+        <p>
+            <label>Topic Description
+            <input value="@_topic.Description" @onchange="@HandleDescriptionChange" size="@MaxInput" />
+            </label>
+        </p>
+    </div>
+    <p>Paste in text of the document this topic is based on </p>
+    <label>Full Text
         <TextArea @onchange="@HandleDocument" maxlength="100000">@_fullText</TextArea>
     </label>
-</div>
-
-@*Accept dragged text, html or docx file*@
-<label>Upload File</label>
-<input type="file" id="NewTopicFile" accept=".docx,.html,.txt" />
-
-<button @onclick="AddTopicClicked">Add Topic</button>
+    
+    <button @onclick="AddTopicClicked">Save</button>
+</fieldset>    
 
 
 @code
